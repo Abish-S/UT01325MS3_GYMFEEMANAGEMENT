@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Linq.Expressions;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Requests;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Responses;
@@ -20,7 +21,12 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
 
         public async Task<List<MemberResponseDto>> GetAllMembersAsync()
         {
-            var members = await _unitOfWork.Members.GetAllRegularMembersAsync();
+            var members = await _unitOfWork.Members.GetAllAsync();
+            return members.Select(MemberMapper.ToDto).ToList();
+        }
+        public async Task<List<MemberResponseDto>> GetAllMembersPredicateAsync(Expression<Func<Member, bool>> predicate)
+        {
+            var members = await _unitOfWork.Members.GetAllMemberAsync(predicate);
             return members.Select(MemberMapper.ToDto).ToList();
         }
 
@@ -87,15 +93,41 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
 
 
 
-        public async Task UpdateMemberAsync(int id, MemberRequestDto dto)
+        public async Task UpdateMemberAsync(int id, MemberUpdateRequest dto)
         {
             var member = await _unitOfWork.Members.GetByIdAsync(id);
             if (member != null)
             {
                 member.FullName = dto.FullName;
-                member.NIC = dto.NIC;
                 member.ContactDetails = dto.ContactDetails;
-                member.RegistrationDate = dto.RegistrationDate;
+                if (dto.SelectedTrainingProgramIds != null)
+                {
+                    // Fetch all valid training programs from the database
+                    var validTrainingPrograms = await _unitOfWork.TrainingPrograms
+                        .GetAllAsync(tp => dto.SelectedTrainingProgramIds.Contains(tp.TrainingProgramId));
+
+                   
+
+                    // Clear existing training programs and add new ones
+                    member.MemberTrainingPrograms.Clear();
+
+                    foreach (var trainingProgram in validTrainingPrograms)
+                    {
+                        member.MemberTrainingPrograms.Add(new MemberTrainingProgram
+                        {
+                            MemberId = member.MemberId,
+                            TrainingProgramId = trainingProgram.TrainingProgramId
+                        });
+                    }
+                }
+                if (dto.Password != null)
+                {
+
+                var passwordHasher = new PasswordHasher<Member>();
+                var passwordHash = passwordHasher.HashPassword(member, dto.Password);
+
+                member.PasswordHash = passwordHash;
+                }
 
                 _unitOfWork.Members.Update(member);
                 await _unitOfWork.CompleteAsync();
@@ -137,6 +169,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
 
             return report;
         }
+
 
 
     }

@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using System.Linq.Expressions;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Requests;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Responses;
 using UT01325MS3_GYMFEEMANAGEMENT.Mappers;
+using UT01325MS3_GYMFEEMANAGEMENT.Models;
 using UT01325MS3_GYMFEEMANAGEMENT.Repositories.Interfaces;
 
 namespace UT01325MS3_GYMFEEMANAGEMENT.Services
@@ -16,9 +18,9 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<List<TrainingProgramResponseDto>> GetAllTrainingProgramsAsync()
+        public async Task<List<TrainingProgramResponseDto>> GetAllTrainingProgramsAsync(Expression<Func<TrainingProgram, bool>> predicate)
         {
-            var trainingPrograms = await _unitOfWork.TrainingPrograms.GetAllAsync();
+            var trainingPrograms = await _unitOfWork.TrainingPrograms.GetAllAsync(predicate);
             return trainingPrograms.Select(TrainingProgramMapper.ToDto).ToList();
         }
 

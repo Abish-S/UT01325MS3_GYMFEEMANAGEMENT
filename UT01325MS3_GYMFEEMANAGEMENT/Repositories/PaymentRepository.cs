@@ -15,9 +15,9 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Payment>> GetAllAsync()
+        public async Task<IEnumerable<Payment>> GetAllAsync(Expression<Func<Payment, bool>> predicate)
         {
-            return await _context.Payments.ToListAsync();
+            return await _context.Payments.Where(predicate).ToListAsync();
         }
 
         public async Task<Payment> GetByIdAsync(int id)

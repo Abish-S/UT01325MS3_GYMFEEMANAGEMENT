@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Requests;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Responses;
+using UT01325MS3_GYMFEEMANAGEMENT.Models;
+using UT01325MS3_GYMFEEMANAGEMENT.Repositories.Interfaces;
 using UT01325MS3_GYMFEEMANAGEMENT.Services;
 
 namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
@@ -11,18 +15,63 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
     [Route("api/[controller]")]
     public class PaymentsController : ControllerBase
     {
+        private readonly IUnitOfWork _unitOfWork;
 
         private readonly PaymentService _paymentService;
 
-        public PaymentsController(PaymentService paymentService)
+        public PaymentsController(PaymentService paymentService, IUnitOfWork unitOfWork)
         {
             _paymentService = paymentService;
+            _unitOfWork = unitOfWork;
+
         }
 
         [HttpGet]
         public async Task<ActionResult<List<PaymentResponseDto>>> GetPayments()
         {
-            var payments = await _paymentService.GetAllPaymentsAsync();
+
+            string authorizationHeader = Request.Headers["Authorization"];
+
+            if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized(new { success = false, message = "Authorization header is missing or invalid." });
+            }
+
+            // Extract the token
+            string token = authorizationHeader.Substring("Bearer ".Length).Trim();
+
+            // Decode the token (optional, for debugging purposes)
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var claims = jwtToken.Claims.ToList();
+            // Extract claims from the JWT token
+
+
+            // Extract NIC from claims
+            var nic = claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (string.IsNullOrEmpty(nic))
+            {
+                return Unauthorized(new { success = false, message = "User is not authenticated." });
+            }
+            var currentmember = await _unitOfWork.Members.GetAllMemberAsync(m => m.NIC == nic);
+            var memberEntity = currentmember.FirstOrDefault();
+
+            bool isAdminUser = memberEntity.IsAdmin;
+            Expression<Func<Payment, bool>> predicate;
+
+            if (isAdminUser)
+            {
+                // Admin can view all members
+                predicate = m => true;  // No filter, get all members
+            }
+            else
+            {
+                // Non-admin: Filter by the current user's NIC
+                predicate = m => m.Member == memberEntity;
+            }
+
+            var payments = await _paymentService.GetAllPaymentsAsync(predicate);
             return Ok(payments);
         }
 

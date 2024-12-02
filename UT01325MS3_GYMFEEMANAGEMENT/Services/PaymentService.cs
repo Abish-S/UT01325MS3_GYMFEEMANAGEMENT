@@ -1,4 +1,5 @@
-﻿using UT01325MS3_GYMFEEMANAGEMENT.DTOs;
+﻿using System.Linq.Expressions;
+using UT01325MS3_GYMFEEMANAGEMENT.DTOs;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Requests;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Responses;
 using UT01325MS3_GYMFEEMANAGEMENT.Enum;
@@ -17,9 +18,10 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<List<PaymentResponseDto>> GetAllPaymentsAsync()
+        public async Task<List<PaymentResponseDto>> GetAllPaymentsAsync(Expression<Func<Payment, bool>> predicate)
         {
-            var payments = await _unitOfWork.Payments.GetAllAsync();
+            var payments = await _unitOfWork.Payments.GetAllAsync(predicate);
+
             return payments.Select(PaymentMapper.ToResDto).ToList();
         }
 

@@ -5,7 +5,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Repositories.Interfaces
 {
     public interface ITrainingProgramRepository
     {
-        Task<IEnumerable<TrainingProgram>> GetAllAsync();
+        Task<IEnumerable<TrainingProgram>> GetAllAsync(Expression<Func<TrainingProgram, bool>> predicate);
         Task<TrainingProgram> GetByIdAsync(int id);
         Task AddAsync(TrainingProgram trainingProgram);
         void Update(TrainingProgram trainingProgram);

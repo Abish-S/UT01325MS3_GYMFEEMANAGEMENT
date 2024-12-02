@@ -20,7 +20,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
         [HttpGet]
         public async Task<ActionResult<List<TrainingProgramResponseDto>>> GetTrainingPrograms()
         {
-            var trainingPrograms = await _trainingProgramService.GetAllTrainingProgramsAsync();
+            var trainingPrograms = await _trainingProgramService.GetAllTrainingProgramsAsync(m =>  true);
             return Ok(trainingPrograms);
         }
 
@@ -43,7 +43,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
         public async Task<ActionResult> UpdateTrainingProgram(int id, [FromBody] TrainingProgramRequestDto dto)
         {
             await _trainingProgramService.UpdateTrainingProgramAsync(id, dto);
-            return NoContent();
+            return Ok();
         }
 
         [HttpDelete("{id}")]

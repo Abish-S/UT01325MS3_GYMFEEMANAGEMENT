@@ -15,9 +15,9 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<TrainingProgram>> GetAllAsync()
+        public async Task<IEnumerable<TrainingProgram>> GetAllAsync(Expression<Func<TrainingProgram, bool>> predicate)
         {
-            return await _context.TrainingPrograms.ToListAsync();
+            return await _context.TrainingPrograms.Where(predicate).ToListAsync();
         }
 
         public async Task<TrainingProgram> GetByIdAsync(int id)
