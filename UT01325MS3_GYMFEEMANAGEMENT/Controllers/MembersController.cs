@@ -1,22 +1,27 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Requests;
 using UT01325MS3_GYMFEEMANAGEMENT.DTOs.Responses;
+using UT01325MS3_GYMFEEMANAGEMENT.Repositories.Interfaces;
 using UT01325MS3_GYMFEEMANAGEMENT.Services;
 
 namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
 {
-  
     [ApiController]
     [Route("api/[controller]")]
     public class MembersController : ControllerBase
     {
         private readonly MemberService _memberService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public MembersController(MemberService memberService)
+      
+
+        public MembersController(MemberService memberService, IUnitOfWork unitOfWork)
         {
             _memberService = memberService;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -90,6 +95,45 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
                     message = "An unexpected error occurred while generating the report.",
                     detail = ex.Message
                 });
+            }
+        }
+        [HttpGet("current")]
+        public async Task<IActionResult> GetCurrentMemberDetails()
+        {
+            try
+            {
+                // Extract NIC from JWT claims
+                var nic = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+                if (string.IsNullOrEmpty(nic))
+                {
+                    return Unauthorized(new { success = false, message = "User is not authenticated." });
+                }
+
+                // Fetch the member's details from the database
+                var member = await _unitOfWork.Members.GetAllMemberAsync(m => m.NIC == nic);
+                var memberEntity = member.FirstOrDefault();
+
+                if (memberEntity == null)
+                {
+                    return NotFound(new { success = false, message = "Member not found." });
+                }
+
+                // Map member details to DTO
+                var memberDetails = new
+                {
+                    memberEntity.FullName,
+                    memberEntity.NIC,
+                    memberEntity.ContactDetails,
+                    memberEntity.RegistrationDate,
+                    memberEntity.IsAdmin
+                };
+
+                return Ok(new { success = true, data = memberDetails });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "An error occurred.", detail = ex.Message });
             }
         }
 
