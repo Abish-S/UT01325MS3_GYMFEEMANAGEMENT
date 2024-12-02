@@ -64,5 +64,13 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Member>> GetAllRegularMembersAsync()
+        {
+            return await _context.Members
+                .Where(m => !m.IsAdmin) // Exclude admin users
+                .ToListAsync();
+        }
+
+
     }
 }

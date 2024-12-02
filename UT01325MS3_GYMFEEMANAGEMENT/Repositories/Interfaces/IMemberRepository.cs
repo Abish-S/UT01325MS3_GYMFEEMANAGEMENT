@@ -8,6 +8,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Repositories.Interfaces
         Task<IEnumerable<Member>> GetAllAsync();
         Task<List<Member>> GetAllMemberAsync(Expression<Func<Member, bool>> predicate);
 
+        Task<List<Member>> GetAllRegularMembersAsync();
         Task<Member> GetByIdAsync(int id);
         Task AddAsync(Member member);
         void Update(Member member);

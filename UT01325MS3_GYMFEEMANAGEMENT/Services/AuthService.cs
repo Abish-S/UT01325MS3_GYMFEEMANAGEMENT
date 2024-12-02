@@ -38,6 +38,11 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             var jwtKey = _configuration["Jwt:Key"];
             var jwtIssuer = _configuration["Jwt:Issuer"];
 
+            if (string.IsNullOrWhiteSpace(jwtKey) || string.IsNullOrWhiteSpace(jwtIssuer))
+            {
+                throw new InvalidOperationException("JWT Key or Issuer is not configured properly.");
+            }
+
             var claims = new[]
             {
         new Claim(JwtRegisteredClaimNames.Sub, member.NIC), // NIC as username
@@ -58,40 +63,86 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<string> AuthenticateMemberAsync(LoginRequestDto loginDto)
+
+        public async Task<(string token, bool isAdmin)> AuthenticateMemberAsync(LoginRequestDto loginDto)
         {
             try
             {
-                // Fetch member by NIC (acting as username)
-                var member = await _unitOfWork.Members.GetAllMemberAsync(m => m.NIC == loginDto.Username);
-                var memberEntity = member.FirstOrDefault();
+                // Check for null or empty input
+                if (string.IsNullOrWhiteSpace(loginDto.Username) || string.IsNullOrWhiteSpace(loginDto.Password))
+                {
+                    throw new ArgumentException("NIC and Password must be provided.");
+                }
+
+                // Fetch member by NIC
+                var members = await _unitOfWork.Members.GetAllMemberAsync(m => m.NIC == loginDto.Username);
+                var memberEntity = members.FirstOrDefault();
 
                 if (memberEntity == null)
                 {
-                    return null; // Member not found
+                    throw new KeyNotFoundException($"Member with NIC '{loginDto.Username}' not found.");
                 }
 
-                // Validate the password using PasswordHasher
+                // Validate password
                 var passwordHasher = new PasswordHasher<Member>();
-                var result = passwordHasher.VerifyHashedPassword(memberEntity, memberEntity.PasswordHash, loginDto.Password);
+                var passwordValidationResult = passwordHasher.VerifyHashedPassword(memberEntity, memberEntity.PasswordHash, loginDto.Password);
 
-                if (result != PasswordVerificationResult.Success)
+                if (passwordValidationResult != PasswordVerificationResult.Success)
                 {
-                    return null; // Invalid password
+                    throw new UnauthorizedAccessException("Invalid password provided.");
                 }
 
                 // Generate JWT token
                 var token = GenerateJwtToken(memberEntity);
 
-                return token;
+                // Return the token and admin status
+                return (token, memberEntity.IsAdmin);
+            }
+            catch (ArgumentException ex)
+            {
+                // Log and rethrow input validation errors
+                Console.WriteLine($"ArgumentException: {ex.Message}");
+                throw;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Log and rethrow member not found errors
+                Console.WriteLine($"KeyNotFoundException: {ex.Message}");
+                throw;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // Log and rethrow password validation errors
+                Console.WriteLine($"UnauthorizedAccessException: {ex.Message}");
+                throw;
             }
             catch (Exception ex)
             {
-                // Log the exception (you can use ILogger here for better logging)
-                Console.WriteLine($"Error in AuthenticateMemberAsync: {ex.Message}");
+                // Log unexpected errors
+                Console.WriteLine($"Unexpected error in AuthenticateMemberAsync: {ex.Message}");
                 throw new Exception("An unexpected error occurred during login.");
             }
         }
+
+        public async Task RegisterAdminAsync(AdminRegisterRequestDto registerDto)
+        {
+            var admin = new Member
+            {
+                FullName = registerDto.FullName,
+                NIC = registerDto.NIC,
+                ContactDetails = registerDto.ContactDetails,
+                RegistrationDate = DateTime.Now,
+                IsAdmin = true // Mark as admin
+            };
+
+            var passwordHasher = new PasswordHasher<Member>();
+            admin.PasswordHash = passwordHasher.HashPassword(admin, registerDto.Password);
+
+            await _unitOfWork.Members.AddAsync(admin);
+            await _unitOfWork.CompleteAsync();
+        }
+
+
 
     }
 }

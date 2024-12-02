@@ -20,7 +20,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
 
         public async Task<List<MemberResponseDto>> GetAllMembersAsync()
         {
-            var members = await _unitOfWork.Members.GetAllAsync();
+            var members = await _unitOfWork.Members.GetAllRegularMembersAsync();
             return members.Select(MemberMapper.ToDto).ToList();
         }
 

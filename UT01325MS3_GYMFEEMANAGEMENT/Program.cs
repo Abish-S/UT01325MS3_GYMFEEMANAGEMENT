@@ -96,6 +96,7 @@ builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<TrainingProgramService>();
 builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<AuthService>();
 
 
 

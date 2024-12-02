@@ -18,21 +18,52 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
-            // Validate input
-            if (string.IsNullOrEmpty(loginDto.Username) || string.IsNullOrEmpty(loginDto.Password))
+            if (string.IsNullOrWhiteSpace(loginDto.Username) || string.IsNullOrWhiteSpace(loginDto.Password))
             {
                 return BadRequest(new { success = false, message = "NIC and Password are required." });
             }
 
-            var token = await _authService.AuthenticateMemberAsync(loginDto);
-
-            if (string.IsNullOrEmpty(token))
+            try
             {
-                return Unauthorized(new { success = false, message = "Invalid NIC or Password" });
-            }
+                var (token, isAdmin) = await _authService.AuthenticateMemberAsync(loginDto);
 
-            return Ok(new { success = true, token = token });
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Unauthorized(new { success = false, message = "Invalid NIC or Password" });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    token = token,
+                    isAdmin = isAdmin
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "An unexpected error occurred.",
+                    detail = ex.Message
+                });
+            }
         }
+
+        [HttpPost("register-admin")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] AdminRegisterRequestDto registerDto)
+        {
+            try
+            {
+                await _authService.RegisterAdminAsync(registerDto);
+                return Ok(new { success = true, message = "Admin registered successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "An error occurred.", detail = ex.Message });
+            }
+        }
+
 
     }
 }

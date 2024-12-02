@@ -12,6 +12,8 @@
 
         public DateTime RegistrationDate { get; set; }
 
+        public bool IsAdmin { get; set; } // New property to indicate admin status
+
         public DateTime? MembershipExpirationDate { get; set; } // Nullable for lifetime memberships
 
         public bool IsRegistrationFeePaid { get; set; } // Track payment of the initial registration fee
