@@ -12,7 +12,9 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Mappers
             {
                 ProgramName = dto.ProgramName,
                 Description = dto.Description,
-                Price = dto.Price // Map Price
+                Price = dto.Price, // Map Price
+                ImagePath = dto.Base64Image,
+                Status = dto.Status
 
             };
         }
@@ -25,6 +27,9 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Mappers
                 ProgramName = entity.ProgramName,
                 Description = entity.Description,
                 Price = entity.Price, // Map Price
+                ImagePath = entity.ImagePath,
+                Status = entity.Status
+
             };
         }
     }

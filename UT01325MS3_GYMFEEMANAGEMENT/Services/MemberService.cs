@@ -128,6 +128,7 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
 
                 member.PasswordHash = passwordHash;
                 }
+               
 
                 _unitOfWork.Members.Update(member);
                 await _unitOfWork.CompleteAsync();

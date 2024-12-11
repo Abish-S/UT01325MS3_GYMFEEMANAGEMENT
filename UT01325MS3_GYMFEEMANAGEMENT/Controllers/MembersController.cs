@@ -211,7 +211,9 @@ public async Task<IActionResult> GetCurrentMemberDetails()
             memberEntity.NIC,
             memberEntity.ContactDetails,
             memberEntity.RegistrationDate,
-            memberEntity.IsAdmin
+            memberEntity.IsAdmin,
+            memberEntity?.MemberTrainingPrograms,
+            memberEntity.MemberId,
         };
 
         return Ok(new { success = true, data = memberDetails });

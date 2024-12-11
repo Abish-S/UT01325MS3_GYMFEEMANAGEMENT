@@ -1,4 +1,6 @@
-﻿namespace UT01325MS3_GYMFEEMANAGEMENT.Models
+﻿using System.Text.Json.Serialization;
+
+namespace UT01325MS3_GYMFEEMANAGEMENT.Models
 {
     public class Member
     {
@@ -19,6 +21,7 @@
         public bool IsRegistrationFeePaid { get; set; } // Track payment of the initial registration fee
 
         public virtual ICollection<Payment> Payments { get; set; }
+        [JsonIgnore]
         public virtual ICollection<MemberTrainingProgram> MemberTrainingPrograms { get; set; }
         public virtual ICollection<Alert> Alerts { get; set; }
         // Default constructor

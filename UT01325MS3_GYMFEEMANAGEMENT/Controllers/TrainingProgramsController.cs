@@ -77,6 +77,8 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Controllers
                 });
             }
         }
+       
+
 
     }
 }

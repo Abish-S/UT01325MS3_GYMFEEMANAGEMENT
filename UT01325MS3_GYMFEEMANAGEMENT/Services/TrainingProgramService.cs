@@ -29,9 +29,14 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             var trainingProgram = await _unitOfWork.TrainingPrograms.GetByIdAsync(id);
             return trainingProgram != null ? TrainingProgramMapper.ToDto(trainingProgram) : null;
         }
+        public async Task<TrainingProgram> GetTrainingProgramById(int id)
+        {
+            return await _unitOfWork.TrainingPrograms.GetByIdAsync(id);
+        }
 
         public async Task AddTrainingProgramAsync(TrainingProgramRequestDto dto)
         {
+
             // Check for duplicate training program by name
             var existingProgram = await _unitOfWork.TrainingPrograms
                 .FindAsync(tp => tp.ProgramName.ToLower() == dto.ProgramName.ToLower());
@@ -46,6 +51,16 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             await _unitOfWork.CompleteAsync();
         }
 
+        public async Task updateTrainingProgram(TrainingProgram dto)
+        {
+
+
+                     _unitOfWork.TrainingPrograms.Update(dto);
+                await _unitOfWork.CompleteAsync();
+               
+           
+        }
+
         public async Task UpdateTrainingProgramAsync(int id, TrainingProgramRequestDto dto)
         {
             var trainingProgram = await _unitOfWork.TrainingPrograms.GetByIdAsync(id);
@@ -53,6 +68,8 @@ namespace UT01325MS3_GYMFEEMANAGEMENT.Services
             {
                 trainingProgram.ProgramName = dto.ProgramName;
                 trainingProgram.Description = dto.Description;
+                trainingProgram.ImagePath = dto.Base64Image;
+                trainingProgram.Price = dto.Price;
 
                 _unitOfWork.TrainingPrograms.Update(trainingProgram);
                 await _unitOfWork.CompleteAsync();
